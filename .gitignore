@@ -4,4 +4,4 @@ data/xsec/*.txt
 outputs/*.dat
 setup.sh
 TEG_v2
-temp_xsec_file.sh
+temp_xsec_file.txt
