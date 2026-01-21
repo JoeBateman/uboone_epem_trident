@@ -102,6 +102,21 @@ vector<double> probability_list;
 int length_probability_list;
 int bin;
 
+//*****************************************************************
+// variables for getting an interaction vertex
+//*****************************************************************
+
+// cm and ns
+double xmin = 0.0 ;
+double xmax = 256.0; 
+double ymin =  -116.3; 
+double ymax = 116.3 ;
+double zmin = 0;
+double zmax = 1036.8;
+
+double MicroBooNEGlobalTimeOffset = 3125.0; //ns
+double MicroBooNERandomTimeOffset = 1600.0; // ns
+
 
 //*****************************************************************
 // flags
@@ -188,7 +203,9 @@ void FindMaxWeight();
 void ComputeCrossSection();
 void ReadDistribution();
 void LoadFluxFromROOT(string, int);
+void GenerateVertex();
 void WriteEventFile(string);
+void WriteEventHepMC3(string);
 void WriteXsecTempFile(string);
 double SquaredMatrixElementPLP(double, double);
 double SquaredMatrixElementPLPanti(double, double);
@@ -1381,7 +1398,8 @@ int main(){
         if(command.compare("GenerateEvents") == 0){
         FindMaxWeight();
 	    GenerateEvents();
-	    WriteEventFile(filename_out.c_str());}
+	    // WriteEventFile(filename_out.c_str());}
+        WriteEventHepMC3(filename_out.c_str());}
 	   
 	      
 	return 0;
@@ -2892,10 +2910,23 @@ void LoadFluxFromROOT(string filename, int target_pdg){
     }
     if (target_pdg < 0) pdg_name = pdg_name+"bar";
 
+    string key; 
     // Get the histogram
-    TH1D* flux_hist = (TH1D*)infile->Get(("hE"+pdg_name+"_cv").c_str());
+    if (filename.find("MCC9") != string::npos){
+        key = "hE"+pdg_name+"_cv";
+    }
+    else if (filename.find("g4lbne") != string::npos){
+        key = pdg_name+"_flux";
+    }
+    else {
+        std::cerr << "Error: Unrecognized ROOT file format for flux" << std::endl;
+        infile->Close();
+        return;
+    }
+
+    TH1D* flux_hist = (TH1D*)infile->Get(key.c_str());
     if (!flux_hist) {
-        std::cerr << "Error: Could not find histogram hE" << pdg_name << " in ROOT file" << std::endl;
+        std::cerr << "Error: Could not find histogram " << key << " in ROOT file" << std::endl;
         infile->Close();
         return;
     }
@@ -2992,6 +3023,17 @@ void WriteEventFile(string filename){
             outfile << std::fixed << std::setprecision(8) << ::data[n] << " ";
             outfile << std::fixed << std::setprecision(8) << "0.0\n";
             n += 4;
+
+            if (material.compare("Ar") == 0){
+            outfile << 1000180400 << "  -1 ";
+                // At rest argon nucleus
+                for(int d=1;d<4;d++){
+                    outfile << std::fixed << std::setprecision(8) << 0. << " ";
+                }
+                // Argon rest mass
+                outfile << std::fixed << std::setprecision(8) << MArgon << " ";
+                outfile << std::fixed << std::setprecision(8) << MArgon << "\n";
+            }   
             
             outfile << PDG2 << "  1 ";
             for(int d=1;d<4;d++){
@@ -3015,35 +3057,142 @@ void WriteEventFile(string filename){
             }
             outfile << std::fixed << std::setprecision(8) << ::data[n] << " ";
             outfile << std::fixed << std::setprecision(8) << m3 << "\n";
-	    
-	    if (material.compare("proton") == 0){
-            n += 4;}
-	    else if (material.compare("neutron") == 0){
-	    n += 4;}
-	    else {
-	    n += 8;}
+            n += 4;
 	    	    
-	    if (material.compare("proton") == 0){
-	    outfile << 2212 << "  1 ";
-            for(int d=1;d<4;d++){
-                outfile << std::fixed << std::setprecision(8) << ::data[n+d] << " ";
+            if (material.compare("proton") == 0){
+            outfile << 2212 << "  1 ";
+                for(int d=1;d<4;d++){
+                    outfile << std::fixed << std::setprecision(8) << ::data[n+d] << " ";
+                }
+                outfile << std::fixed << std::setprecision(8) << ::data[n] << " ";
+                outfile << std::fixed << std::setprecision(8) << M << "\n";
             }
-            outfile << std::fixed << std::setprecision(8) << ::data[n] << " ";
-            outfile << std::fixed << std::setprecision(8) << M << "\n";
-            n += 4;}
-            
-        else if (material.compare("neutron") == 0){
-	    outfile << 2112 << "  1 ";
-            for(int d=1;d<4;d++){
-                outfile << std::fixed << std::setprecision(8) << ::data[n+d] << " ";
+            else if (material.compare("neutron") == 0){
+            outfile << 2112 << "  1 ";
+                for(int d=1;d<4;d++){
+                    outfile << std::fixed << std::setprecision(8) << ::data[n+d] << " ";
+                }
+                outfile << std::fixed << std::setprecision(8) << ::data[n] << " ";
+                outfile << std::fixed << std::setprecision(8) << M << "\n";
             }
-            outfile << std::fixed << std::setprecision(8) << ::data[n] << " ";
-            outfile << std::fixed << std::setprecision(8) << M << "\n";
-            n += 4;}
-            
-	    outfile << "</event>";
+            else if (material.compare("Ar") == 0){
+            outfile << 1000180400 << "  1 ";
+                for(int d=1;d<4;d++){
+                    outfile << std::fixed << std::setprecision(8) << ::data[n+d] << " ";
+                }
+                outfile << std::fixed << std::setprecision(8) << ::data[n] << " ";
+                outfile << std::fixed << std::setprecision(8) << M << "\n";
+            }   
+            n += 4;
+            outfile << "</event>";
     }
 
+    outfile.close();
+}
+
+void WriteEventHepMC3(string filename){
+  
+    ofstream outfile;
+    outfile.open(filename.c_str(), ios_base::trunc | ios_base::out | ios_base::in);
+    
+    // write the header
+    outfile << "HepMC::Version 3.02.05\n";
+    outfile << "HepMC::Asciiv3-START_EVENT_LISTING\n";
+    
+    int n = 0;
+    int event_num = 0;
+
+    while(n < 20*Nevents){
+        
+        int particle = 0;
+        int vertex = 0;
+        // Generate a random vertex in the active volume
+        double vtx_x = xmin + (xmax - xmin) * realdistribution(generator);
+        double vtx_y = ymin + (ymax - ymin)  * realdistribution(generator);
+        double vtx_z = zmin + (zmax - zmin) * realdistribution(generator);
+        double vtx_t = MicroBooNEGlobalTimeOffset + MicroBooNERandomTimeOffset * realdistribution(generator);
+
+        outfile << "E " << event_num << " 1 6\n";
+        outfile << "U GEV CM\n";
+
+        
+        particle +=1;
+        outfile << "P " << particle << " 0 " << std::fixed  << PDG1  << " ";
+        for(int d=1;d<4;d++){
+            outfile << std::fixed << std::setprecision(8) << ::data[n+d] << " ";
+        }
+        outfile << std::fixed << std::setprecision(8) << ::data[n] << " ";
+        outfile << std::fixed << std::setprecision(8) << "0.0" << " 4\n";
+        n += 4;
+
+        int target_pdg = -1;
+        double target_mass = -1.;
+        if (material.compare("Ar") == 0){
+            target_pdg = 1000180400;
+            target_mass = MArgon;
+        }   
+        else if (material.compare("neutron") == 0){
+            target_pdg = 2112;
+            target_mass = Mneutron;
+        }
+        else if (material.compare("proton") == 0){
+            target_pdg == 2212;
+            target_mass = Mproton;
+        }
+        
+        particle +=1;
+        outfile << "P " << std::fixed << particle << std::fixed  << " 0 " << std::fixed  << target_pdg  << " ";
+        // At rest argon nucleus
+        for(int d=1;d<4;d++){
+            outfile << std::fixed << std::setprecision(8) << 0. << " ";
+        }
+        // Argon rest mass
+        outfile << std::fixed << std::setprecision(8) << target_mass << " ";
+        outfile << std::fixed << std::setprecision(8) << target_mass << " 4\n";
+        
+
+        vertex += -1;
+        outfile << "V " << std::fixed << vertex << std::fixed  << " 0 [1,2] @ " << std::fixed  << PDG1;
+        outfile << vtx_x << " " << vtx_y << " " << vtx_z << " " << vtx_t << "\n";
+
+        particle +=1;
+        outfile << "P " << particle << " -1 " << std::fixed  << PDG2  << " ";
+        for(int d=1;d<4;d++){
+            outfile << std::fixed << std::setprecision(8) << ::data[n+d] << " ";
+        }
+        outfile << std::fixed << std::setprecision(8) << ::data[n] << " ";
+        outfile << std::fixed << std::setprecision(8) << "0.0" <<" 1\n";
+        n += 4;
+
+        particle +=1;
+        outfile << "P " << particle << " -1 " << std::fixed  << PDG4  << " ";
+        for(int d=1;d<4;d++){
+            outfile << std::fixed << std::setprecision(8) << ::data[n+d] << " ";
+        }
+        outfile << std::fixed << std::setprecision(8) << ::data[n] << " ";
+        outfile << std::fixed << std::setprecision(8) << m4 << " 1\n";
+        n += 4;
+
+        particle +=1;
+        outfile << "P " << particle << " -1 " << std::fixed  << PDG3  << " ";
+        for(int d=1;d<4;d++){
+            outfile << std::fixed << std::setprecision(8) << ::data[n+d] << " ";
+        }
+        outfile << std::fixed << std::setprecision(8) << ::data[n] << " ";
+        outfile << std::fixed << std::setprecision(8) << m3 << " 1\n";
+        n += 4;
+
+        particle +=1;
+        outfile << "P " << particle << " -1 " << std::fixed  << target_pdg  << " ";
+        for(int d=1;d<4;d++){
+            outfile << std::fixed << std::setprecision(8) << ::data[n+d] << " ";
+        }
+        outfile << std::fixed << std::setprecision(8) << ::data[n] << " ";
+        outfile << std::fixed << std::setprecision(8) << target_mass << " 1\n";
+        n += 4;
+        event_num++;
+    }
+    outfile << "HepMC::Asciiv3-END_EVENT_LISTING";
     outfile.close();
 }
 
