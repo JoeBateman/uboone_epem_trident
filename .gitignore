@@ -1,7 +1,8 @@
 data/flux
-data/xsec
-data/xsec/*.txt
-outputs/*.dat
+data/xsecs
+data/microboone
+outputs/*
 setup.sh
 TEG_v2
 temp_xsec_file.txt
+*.hepmc3
