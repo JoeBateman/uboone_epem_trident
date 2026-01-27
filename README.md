@@ -10,4 +10,4 @@ To build TEG_v2, you will need an existing `ROOT` install. If ups is availble, t
 ```
 setup root v6_28_12 -q e26:p3915:prof
 ```
-in an SL7 container. Once `ROOT` is setup, you can use `g++` and the `Makefile` to compile the executable by running `make`. This will create an executable called TEV_v2, which you can call in this directory by using `./TEG_v2` or add it to your path to call anywhere.
+or running `bash scripts/setup.sh` in an SL7 container. Once `ROOT` is setup, you can use `g++` and the `Makefile` to compile the executable by running `make`. This will create an executable called TEV_v2, which you can call in this directory by using `./TEG_v2` or add it to your path to call anywhere.
