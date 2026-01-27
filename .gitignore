@@ -1,11 +1,22 @@
+# Ignore contents of data and output directories
 data/flux/*
 data/xsecs/*
 data/microboone
 outputs/*
-setup.sh
+
+# Ignore compiled binaries
 TEG_v2
-temp_xsec_file.txt
-*.hepmc3
+
+# Ignore cross section files generated and imported
 cross_sections/*.txt
 cross_sections/*.csv
-.gitignore
+
+# Ignore other output files (both debug and production)
+*.root
+*.db
+*.log
+*.pndr
+*.txt
+*.hepmc3
+*.hepevt
+
