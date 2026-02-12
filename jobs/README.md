@@ -1,0 +1,3 @@
+This is an implementation of Guanqun Ge's method for getting HEPevt files onto the grid (with and without overlay). The source repo can be found [here](https://github.com/GuanqunGe/coherent_single_photon/tree/master), and the step by step instructions are documented in [docdb-38163](https://microboone-docdb.fnal.gov/cgi-bin/sso/ShowDocument?docid=38163). 
+
+Specify an HEPevt file in helper_scripts/splitHEPevtfile.sh and an output directory, and the file will be split into X batches of N events, and tar'd as needed in later steps. 
