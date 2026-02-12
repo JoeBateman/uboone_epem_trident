@@ -20,3 +20,9 @@ cross_sections/*.csv
 *.hepmc3
 *.hepevt
 
+# Ignoring specific output files and test areas
+jobs/HEPevtfile_list
+jobs/test_area
+
+# Output files from running larsoft with pandora
+Pandora_Geometry.xml
