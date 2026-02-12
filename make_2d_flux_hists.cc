@@ -4,9 +4,15 @@ float KEfromMom(float mom[3],float mass){
   return KE;
   
 }
+//Loop through files
+// string basePath = "/pnfs/uboone/persistent/uboonebeam/bnb_gsimple/bnb_gsimple_fluxes_01.09.2019_463/converted_beammc_wincorr_";
+// string outFileName = "/exp/uboone/app/users/jbateman/workdir/DarkNews/Trident/data/flux/bnb/MCC9_FluxHist_volTPCActive_w2D_hists.root";
+
+string basePath = "/pnfs/uboone/persistent/uboonebeam/numi_gsimple/numi_gsimple_fluxes_12.17.2015_470/gsimple_microboone-numi_mn000z200i_rp11_bs1.1_pnut_lowth_f112c0f093bbird_";
+string outFileName = "/exp/uboone/app/users/jbateman/workdir/DarkNews/Trident/data/flux/numi/MCC9_FluxHist_volTPCActive_w2D_hists.root";
 
 void make_2d_flux_hists(){
-  int nfiles = 500; // Number of flux files to iterate over
+  int nfiles = 1000; // Number of flux files to iterate over
   string particleNames[4] = {"#nu_{#mu}","#bar{#nu}_{#mu}","#nu_{e}","#bar{#nu}_{e}"};
   string particleSymbols[4] = {"numu","numubar","nue","nuebar"};
   int pdgID[4] = {14,-14,12,-12};
@@ -26,13 +32,17 @@ void make_2d_flux_hists(){
       histsE[iHist] = temp;
 
       string histName_z = "hz_"+particleSymbols[iHist]+"_cv";
-      TH1D* temp_z = new TH1D(histName_z.c_str(),histName_z.c_str(),50,-100,5000); // 50 bins from -100 to 5000 cm
+      // TH1D* temp_z = new TH1D(histName_z.c_str(),histName_z.c_str(),50,-100,5000); // 50 bins from -100 to 5000 cm (BNB)
+      TH1D* temp_z = new TH1D(histName_z.c_str(),histName_z.c_str(),200,-1000,75000); // 200 bins from -1000 to 75000 cm (NuMI)
+
+
       temp_z->GetXaxis()->SetTitle("z (cm)");
       temp_z->GetYaxis()->SetTitle("#nu / bin / POT / cm^{2}"); // Replace X with actual POT later
       histsz[iHist] = temp_z;
 
       string histName_Ez = "hE_vs_z_"+particleSymbols[iHist];
-      TH2D* temp_Ez = new TH2D(histName_Ez.c_str(),histName_Ez.c_str(),200,0,10,50,-100,5000);
+      // TH2D* temp_Ez = new TH2D(histName_Ez.c_str(),histName_Ez.c_str(),200,0,10,50,-100,5000); // 200 bins from 0 to 10 GeV and 50 bins from -100 to 5000 cm (BNB)
+      TH2D* temp_Ez = new TH2D(histName_Ez.c_str(),histName_Ez.c_str(),200,0,10,200,-1000,75000); // 200 bins from 0 to 10 GeV and 200 bins from -1000 to 75000 cm (NuMI)
       temp_Ez->GetXaxis()->SetTitle("Energy (GeV)");
       temp_Ez->GetYaxis()->SetTitle("z (cm)");
       hists_Ez[iHist] = temp_Ez;
@@ -41,13 +51,16 @@ void make_2d_flux_hists(){
   TH1D * pot = new TH1D("POT","POT",1,0,1); // Dummy histogram to store POT info
   pot->SetBinContent(1, cumulativePOT);
 
-  //Loop through files
-  string basePath = "/pnfs/uboone/persistent/uboonebeam/bnb_gsimple/bnb_gsimple_fluxes_01.09.2019_463/converted_beammc_wincorr_";
+  
+  
   for(int iFile=0;iFile<nfiles;iFile++){
     string fileIndex = to_string(iFile);
     int n_zero = 4;
     fileIndex = string(n_zero - std::min(n_zero, (int)fileIndex.length()), '0') + fileIndex;
-    string inFile = basePath + fileIndex + ".root";
+    
+    // string inFile = basePath + fileIndex + ".root";
+    string inFile = basePath + fileIndex +"_0" + fileIndex + ".root"; // Adjusted for numi file naming convention
+
     std::cout << "Processing file: " << inFile << std::endl;
     
     TFile* f = TFile::Open(inFile.c_str());
@@ -104,10 +117,7 @@ void make_2d_flux_hists(){
   std::cout << "Cumulative POT: " << cumulativePOT << std::endl;
 
   
-
-
-  TFile* outFile = new TFile("/exp/uboone/app/users/jbateman/workdir/DarkNews/Trident/data/flux/bnb/MCC9_FluxHist_volTPCActive_w2D_hists_alt.root","RECREATE");
-
+  TFile* outFile = new TFile(outFileName.c_str(),"RECREATE");
   // Normalize histograms to per POT per cm2
 
   // 256.35*233.
