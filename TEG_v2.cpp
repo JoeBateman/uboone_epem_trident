@@ -123,6 +123,13 @@ double zmax = 1036.8;
 
 double radius_decay_pipe = 35.0; // cm
 
+// Assume beam axis is parallel to detector axis, unless specified otherwise
+vector<vector<double>> beam_to_uboone_matrix = {
+    {1.0, 0.0, 0.0},
+    {0.0, 1.0, 0.0},
+    {0.0, 0.0, 1.0}
+};
+
 // BNB coordinates origin in MicroBooNE coordinates (no rotation required)
 double BNB_x_offset  = 128.175; // cm
 double BNB_y_offset  = -0.93; // cm
@@ -132,6 +139,23 @@ double BNB_z_offset  = -46336.3525; // cm
 double MicroBooNEGlobalTimeOffset = 3125.0; //ns
 double MicroBooNERandomTimeOffset = 1600.0; // ns
 
+// NuMI coordinates origin in MicroBooNE coordinates (rotation also required)
+
+double NuMI_x_offset  = -31388.; // cm
+double NuMI_y_offset  = -3316.; // cm
+double NuMI_z_offset  = -60100; // cm
+
+double NuMI_beam_radius = 100.0; // cm , decay pipe diameter is 2m
+
+double NuMI_beam_vec_x = 0.38880858; // cm
+double NuMI_beam_vec_y = -0.05842799; // cm
+double NuMI_beam_vec_z = 0.91946401; // cm
+
+vector<vector<double>> numi_to_uboone_matrix = {
+    {0.9210385380402568, 0.0227135048039241207, 0.38880857519374290},
+    {0.0000462540012621546684, 0.99829162468141475, -0.0584279894529063024},
+    {-0.38947144863934974, 0.0538324139386641073, 0.91946400794392302}
+};
 
 //*****************************************************************
 // flags
@@ -538,9 +562,10 @@ int main(){
         std::cout << "Are you using a fixed neutrino energy or an energy distribution? \n\n";
 	    std::cout << "[1] fixed neutrino energy \n\n";
         std::cout << "[2] Use the uBooNE BNB flux \n\n";
-        std::cout << "[3] Load flux from a ROOT file \n\n";
+        std::cout << "[3] Use the uBooNE NuMI flux \n\n";
+        std::cout << "[4] Load flux from a ROOT file \n\n";
         std::cin >> energy_type;
-	    if(energy_type.compare("1") != 0 && energy_type.compare("2") != 0 ){
+	    if(energy_type.compare("1") != 0 && energy_type.compare("2") != 0  && energy_type.compare("3") != 0  && energy_type.compare("4") != 0){
 	    std::cout << "\n Invalid selection \n";
 	    return 0;}
 
@@ -559,8 +584,15 @@ int main(){
             flux_file = "/exp/uboone/app/users/jbateman/workdir/DarkNews/Trident/data/flux/bnb/MCC9_FluxHist_volTPCActive_w2D_hists.root";
             
             LoadFluxFromROOT(flux_file, PDG1);}
-        
+
         if(energy_type.compare("3") == 0){
+            string is_antinu;
+            string flavor;
+            flux_file = "/exp/uboone/app/users/jbateman/workdir/DarkNews/Trident/data/flux/numi/MCC9_FluxHist_volTPCActive_w2D_hists.root";
+            
+            LoadFluxFromROOT(flux_file, PDG1);}
+        
+        if(energy_type.compare("4") == 0){
             string is_antinu;
             string flavor;
             std::cout << "\n";
@@ -2789,6 +2821,33 @@ vector<double> SampleEvsZhist(double E_nu, string filename){
         return production_vertex;
     }
 
+    double offset_x;
+    double offset_y;
+    double offset_z;
+
+    if (filename.find("bnb") != string::npos || filename.find("BNB") != string::npos) {
+        offset_x = BNB_x_offset;
+        offset_y = BNB_y_offset;
+        offset_z = BNB_z_offset;
+    }
+    else if (filename.find("numi") != string::npos || filename.find("NUMI") != string::npos) {
+        offset_x = NuMI_x_offset;
+        offset_y = NuMI_y_offset;
+        offset_z = NuMI_z_offset;
+
+        beam_to_uboone_matrix = numi_to_uboone_matrix;
+        radius_decay_pipe = NuMI_beam_radius;
+    }
+    else {
+        std::cout<<"Using the maximum z edge of the histogram as offset for z \n";
+        auto bins = hist->GetXaxis()->GetNbins();
+        
+        auto maxZ = hist->GetYaxis()->GetBinUpEdge(hist->GetYaxis()->GetNbins());
+        offset_x = 0.0;
+        offset_y = 0.0;
+        offset_z = -maxZ;
+    }
+
     // Find the bin corresponding to E_nu
     int ebin = hist->GetXaxis()->FindBin(E_nu);
     // Project the histogram onto the z-axis for the given energy bin
@@ -2816,9 +2875,11 @@ vector<double> SampleEvsZhist(double E_nu, string filename){
     double sampled_x = r * cos(theta);
     double sampled_y = r * sin(theta);
 
-    production_vertex[0] = sampled_x + BNB_x_offset;
-    production_vertex[1] = sampled_y + BNB_y_offset;
-    production_vertex[2] = sampled_z + BNB_z_offset;
+
+    // Transform from beam coordinates to UBoone coordinates - by default the rotation matrix is the identity so x,y,z are unchanged
+    production_vertex[0] = (sampled_x * beam_to_uboone_matrix[0][0]) + (sampled_y * beam_to_uboone_matrix[0][1]) + (sampled_z * beam_to_uboone_matrix[0][2]) + offset_x;
+    production_vertex[1] = (sampled_x * beam_to_uboone_matrix[1][0]) + (sampled_y * beam_to_uboone_matrix[1][1]) + (sampled_z * beam_to_uboone_matrix[1][2]) + offset_y;
+    production_vertex[2] = (sampled_x * beam_to_uboone_matrix[2][0]) + (sampled_y * beam_to_uboone_matrix[2][1]) + (sampled_z * beam_to_uboone_matrix[2][2]) + offset_z;
 
     if (debug_mode){
         // write production vertex to a temp file for debugging
