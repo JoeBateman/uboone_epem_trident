@@ -10,10 +10,21 @@
 ./TEG_v2 <<EOF
 7
 Ar
-2
+3
 SM
 GenerateEvents
 5000
-outputs/numu_epem_5000
+outputs/numu_numi_5000
+2
+EOF
+
+./TEG_v2 <<EOF
+1
+Ar
+3
+SM
+GenerateEvents
+5000
+outputs/nue_numi_5000
 2
 EOF
