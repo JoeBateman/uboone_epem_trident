@@ -9,6 +9,7 @@
 <!ENTITY relreco1 "v08_00_00_13r">
 <!ENTITY relreco2 "v08_00_00_26">
 <!ENTITY relwcreco2 "v08_00_00_59">
+<!ENTITY relSURPRISE "v10_04_07_20">
 <!-- <!ENTITY number_of_events "1000000000"> 
 <!ENTITY number_of_jobs "215"> 
 <!ENTITY number_of_jobs_r1 "199"> 
@@ -17,10 +18,11 @@
 <!ENTITY number_of_jobs_weights "4">  -->
 
 <!ENTITY number_of_events "250"> 
-<!ENTITY number_of_jobs "5"> 
-<!ENTITY number_of_jobs_r1 "5"> 
-<!ENTITY number_of_jobs_r2 "5"> 
-<!ENTITY number_of_jobs_wcr2 "5"> 
+<!ENTITY number_of_jobs "100"> 
+<!ENTITY number_of_jobs_r1 "100"> 
+<!ENTITY number_of_jobs_r2 "100"> 
+<!ENTITY number_of_jobs_wcr2 "100"> 
+<!ENTITY number_of_jobs_SURPRISE "100"> 
 <!ENTITY number_of_jobs_weights "4"> 
 
 <!ENTITY file_type "mc">
@@ -31,7 +33,7 @@
 <!ENTITY stage2 "reco1">
 <!ENTITY stage3 "reco2">
 <!ENTITY stage4 "wc_reco2">
-<!ENTITY stage5 "wc_reco2_detvar">
+<!ENTITY stage5 "SURPRISE_reco2">
 <!ENTITY memory_wcr2 "8000">
 ]>
 
@@ -69,7 +71,7 @@
     <!-- Using my copy of Guanqun's scripts and gen fcls -->
     <initsource>/pnfs/uboone/persistent/users/jbateman/scripts/Trident/unzip_test_script.sh</initsource>
     <!-- <inputdef>prod_extunbiased_swizzle_inclusive_v3_goodruns_mcc9_run1_high_lifetime_overlay_eLee_low</inputdef> -->
-    <inputdef>prod_extbnb_swizzle_optfilter_crt_inclusive_v6_G1_jbateman_run3_1files</inputdef> <!-- testing a different EXT unbiased file from run 3b -->
+    <inputdef>prod_extunbiased_swizzle_inclusive_v3_goodruns_mcc9_run1_high_lifetime_overlay_eLee_low</inputdef>
   
     <fcl>Simulation_AddOverlay_batch_LOCAL.fcl</fcl>
     <outdir>/pnfs/uboone/scratch/users/jbateman/&name;/&relgen;/&tag;/&stage1;</outdir>
@@ -84,7 +86,7 @@
     <!--<disk>35GB</disk>-->
     <jobsub> --expected-lifetime=long --append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)' -f /pnfs/uboone/persistent/users/jbateman/tars/TridentHEPevt/numu_epem_50evts.tar -f /pnfs/uboone/persistent/users/jbateman/fcls/Trident/Simulation_AddOverlay_batch_TEMPLATE.fcl</jobsub>
     <jobsub_start>   --append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)' -f /pnfs/uboone/persistent/users/jbateman/tars/TridentHEPevt/numu_epem_50evts.tar -f /pnfs/uboone/persistent/users/jbateman/fcls/Trident/Simulation_AddOverlay_batch_TEMPLATE.fcl</jobsub_start>
-    <schema>root</schema>
+    <schema>https</schema>
     <!--<blacklist>Lancaster,UNIBE-LHEP,Wisconsin</blacklist>-->
   </stage>
   
@@ -150,7 +152,7 @@
     <disk>100GB</disk>
     <jobsub> -e IFDH_CP_UNLINK_ON_ERROR=1 --expected-lifetime=24h --append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)&amp;&amp;(TARGET.HAS_CVMFS_uboone_osgstorage_org==true)' </jobsub>
     <jobsub_start> --expected-lifetime=short</jobsub_start>
-    <schema>root</schema>
+    <schema>https</schema>
     <!--<blacklist>Lancaster,UNIBE-LHEP,Wisconsin</blacklist>-->
   </stage>
   
@@ -198,6 +200,7 @@
 
   <stage name="&stage3;">
 
+    <!-- fcl>crt_merge_extra_v06_26_01_13.fcl</fcl --> <!-- 01_13.fcl for run 3b/4a, 01_13_33.fcl for run 4b, 01_26.fcl for run 3a/2b (no remerging 4c+)-->  
     <fcl>wirecell_detsim_optical_overlay_uboone.fcl</fcl>
     <fcl>standard_overlay_optical_uboone.fcl</fcl>
     <fcl>reco_uboone_mcc9_8_driver_overlay_optical.fcl</fcl>
@@ -216,7 +219,7 @@
     <disk>35GB</disk>
     <jobsub> -e IFDH_CP_UNLINK_ON_ERROR=1 --expected-lifetime=96h --append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)&amp;&amp;(TARGET.HAS_CVMFS_uboone_osgstorage_org==true)' </jobsub>
     <jobsub_start> --expected-lifetime=short</jobsub_start>
-    <schema>root</schema>
+    <schema>https</schema>
     <!--<blacklist>Lancaster,UNIBE-LHEP,Wisconsin</blacklist>-->
   </stage>
   
@@ -262,8 +265,10 @@
 
     <inputlist>/exp/uboone/data/users/jbateman/book/&name;/&relreco1;/&tag;/&stage2;/files.list</inputlist>
 
+    <!-- This follows the BNB Unified Wire Cell reco2 outlined here: https://cdcvs.fnal.gov/redmine/projects/uboone-physics-analysis/wiki/MCC9_Production_Fhicls -->
+
     <fcl>wirecell_detsim_optical_overlay_uboone.fcl</fcl>
-    <fcl>standard_overlay_notpc_uboone.fcl</fcl>
+    <fcl>standard_overlay_optical_uboone.fcl</fcl>
     <fcl>
       run_celltreeub_overlay_port_prod.fcl
     <endscript>/pnfs/uboone/persistent/users/wgu/unified_reco2_wirecell_overlay.sh</endscript>
@@ -288,7 +293,8 @@
     <fcl>
     run_wcanatree_overlay.fcl
       <!--<initsource>/pnfs/uboone/persistent/users/wgu/def_filetype_nu_overlay_run1.sh</initsource>-->
-    <initsource>def_filetype_nu_overlay_noweights_nooutput_run1.sh</initsource>
+    <!-- Copy of the script defined in Pawels wrapper_fcls directory -->
+    <initsource>/pnfs/uboone/persistent/users/jbateman/scripts/Trident/def_filetype_nu_overlay_noweights_nooutput_run1.sh</initsource>
     </fcl>
     
     <outdir>/pnfs/uboone/persistent/users/jbateman/&name;/&relwcreco2;/&tag;/&stage4;</outdir>
@@ -303,7 +309,7 @@
     <disk>35GB</disk>
     <jobsub> -e IFDH_CP_UNLINK_ON_ERROR=1 --expected-lifetime=24h --append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)&amp;&amp;(TARGET.HAS_CVMFS_uboone_osgstorage_org==true)' </jobsub>
     <jobsub_start> --expected-lifetime=short</jobsub_start>
-    <schema>root</schema>
+    <schema>https</schema>
     <!--<blacklist>Lancaster,UNIBE-LHEP,Wisconsin</blacklist>-->
   </stage>
   
@@ -315,4 +321,124 @@
   <runtype>&run_type;</runtype>
 
 </project>
+
+<project name="&name;_SURPRISE">
+
+  <!-- Project size -->
+  <numevents>&number_of_events;</numevents>
+
+  <!-- Operating System -->
+  <os>SL7</os>
+
+  <!-- Project Version -->
+  <version>&tag;_&relSURPRISE;</version>
+
+  <!-- Batch resources -->
+  <!--<resource>DEDICATED,OPPORTUNISTIC,OFFSITE</resource>-->
+  <resource>DEDICATED,OPPORTUNISTIC</resource>
+
+  <!-- Larsoft information -->
+  <larsoft>
+    <tag>&relSURPRISE;</tag>
+    <qual>e26:prof</qual>
+  </larsoft>
+
+  <check>0</check>
+  <copy>0</copy>
+
+  <!-- Project stages -->
+
+  <!-- prod_extunbiased_swizzle_inclusive_v3_goodruns_mcc9_run1_high_lifetime_overlay_koto_kdar_dump_fhc_100MeV -->
+  <!-- not finished yet -->
+
+<stage name="&stage5;">
+
+    <inputlist>/exp/uboone/data/users/jbateman/book/&name;/&relreco1;/&tag;/&stage2;/files.list</inputlist>
+    
+    <!-- Super Unified workflow defined here: https://cdcvs.fnal.gov/redmine/projects/uboone-physics-analysis/wiki/Super_Unified_Workflow_ -->
+    
+    <!-- Skip this first fcl is I think it depends on genie -->
+    <!-- <fcl>copy_nonartroot.fcl
+      <endscript>check_crt_merging.sh</endscript>
+      <endscript>run_lar_subshell.sh -c run_eventweight_microboone_sep24.fcl -v v08_00_00_88</endscript>
+      <endscript>run_lar_subshell.sh -c run_eventweight_microboone_sep24_extragenieall_1.fcl -v v08_00_00_88</endscript>
+      <endscript>run_lar_subshell.sh -c run_eventweight_microboone_sep24_extragenieall_2.fcl -v v08_00_00_88</endscript>
+      <endscript>run_lar_subshell.sh -c run_eventweight_microboone_sep24_extragenieall_3.fcl -v v08_00_00_88</endscript>
+      <endscript>run_lar_subshell.sh -c run_eventweight_microboone_sep24_extragenieall_4.fcl -v v08_00_00_88</endscript>
+      <endscript>run_lar_subshell.sh -c run_eventweight_microboone_sep24_extragenieall_5.fcl -v v08_00_00_88</endscript>
+    </fcl> -->
+    
+    <fcl>
+      crt_merge_extra_v06_26_01_13.fcl
+      <initsource>crt_remerging.sh</initsource>
+    </fcl>
+    <fcl>wirecell_reg4_LightPropTime_LY.fcl</fcl>
+    <fcl>wirecell_detsim_optical_overlay_uboone.fcl</fcl>
+    <fcl>
+      standard_overlay_optical_uboone.fcl
+      <initsource>standard_overlay_optical_uboone.sh</initsource>
+    </fcl>
+    <fcl>
+      run_celltreeub_overlay_port_prod.fcl
+      <endscript>fully_unified_reco2_wirecell.sh</endscript>
+    </fcl>
+    <fcl>
+      run_slimmed_port_overlay_sp.fcl
+      <initsource>update_slimmed_port.sh</initsource>
+    </fcl>
+    <fcl>mcc10_dlreco_w_wirecell_driver_overlay_lantern_set1.fcl</fcl> 
+    <fcl>mcc10_dlreco_w_wirecell_driver_overlay_lantern_set2.fcl</fcl>
+    <fcl>mcc10_dlreco_w_wirecell_driver_overlay_lantern_set3.fcl</fcl> 
+    <fcl>mcc10_dlreco_w_wirecell_driver_overlay_lantern_set4.fcl</fcl> 
+    <fcl>mcc10_dlreco_w_wirecell_driver_overlay_lantern_set5.fcl 
+    <endscript>merge_dlreco_fnal_overlay_and_mc_lantern_multiStage.sh</endscript> 
+    </fcl>
+    <fcl>run_wcpplus_port_noreco1drop.fcl</fcl>
+    <fcl>
+      run_wcpf_port_noreco1drop.fcl
+      <initsource>update_wcpf_port.sh</initsource>
+    </fcl>
+    <fcl>run_wirecellmcs.fcl</fcl>
+    <fcl>reco_uboone_mcc9_8_driver_overlay_opfilter.fcl</fcl>
+    <fcl>reco_uboone_mcc9_10_driver_overlay_stage2a_sce.fcl</fcl>
+    <fcl>reco_uboone_mcc9_10_driver_overlay_nugraph_sce.fcl</fcl>
+    <fcl>reco_uboone_mcc9_10_driver_overlay_stage2b_sce.fcl</fcl>
+    <fcl>run_fullshowerreco_overlay_sce.fcl</fcl>
+    <fcl>run_reboone.fcl</fcl>
+    <fcl>
+      run_combinedrecotree_overlay_sce.fcl
+      <initsource>pick_combinedrecotree_overlay_sce.sh</initsource>
+      <initsource>def_filetype_bnb_nu_overlay.sh</initsource>
+    </fcl>
+    <fcl>
+      define_metadata_lantern.fcl
+      <endscript>pick_launch_lantern_container_mc_unified.sh</endscript>
+    <endscript>check_config.py</endscript>
+    </fcl>
+
+    <outdir>/pnfs/uboone/persistent/users/jbateman/&name;/&relwcreco2;/&tag;/&stage4;</outdir>
+    <logdir>/pnfs/uboone/scratch/users/jbateman/&name;/&relwcreco2;/&tag;/&stage4;</logdir>
+    <workdir>/pnfs/uboone/persistent/users/jbateman/work/&name;/&relwcreco2;/&tag;/&stage4;</workdir>
+    <bookdir>/exp/uboone/data/users/jbateman/book/&name;/&relwcreco2;/&tag;/&stage4;</bookdir>
+    <maxfilesperjob>1</maxfilesperjob>
+    <numjobs>&number_of_jobs_wcr2;</numjobs>
+    <datatier>reconstructed</datatier>
+    <datafiletypes>root,pndr</datafiletypes>
+    <memory>5000</memory>
+    <disk>35GB</disk>
+    <jobsub> -e IFDH_CP_UNLINK_ON_ERROR=1 --expected-lifetime=24h --append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)&amp;&amp;(TARGET.HAS_CVMFS_uboone_osgstorage_org==true)' </jobsub>
+    <jobsub_start> --expected-lifetime=short</jobsub_start>
+    <schema>https</schema>
+    <!--<blacklist>Lancaster,UNIBE-LHEP,Wisconsin</blacklist>-->
+  </stage>
+  
+
+  <!-- file type -->
+  <filetype>&file_type;</filetype>
+
+  <!-- run type -->
+  <runtype>&run_type;</runtype>
+
+</project>
+
 </job>
