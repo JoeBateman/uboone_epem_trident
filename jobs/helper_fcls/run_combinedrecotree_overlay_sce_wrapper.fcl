@@ -1,0 +1,30 @@
+#include "run_combinedrecotree_overlay.fcl"
+
+services.SpaceCharge.EfieldOffsetScale: 3.650968 # Scale factor should be: 3.650968
+
+physics.filters.singlephotonana.RunTrueEventWeight: false
+physics.filters.singlephotonana.isTextGen: true
+
+physics.filters.nuselection.AnalysisTools.default.ignoreMCFlux: true
+physics.filters.nuselection.AnalysisTools.default.isAPE: true
+
+physics.filters.nuselection.AnalysisTools.slicepurcompl.OrigHproducer:"gaushit::OverlayStage1a"
+physics.filters.nuselection.AnalysisTools.timing.nstimePMTWFproducer: "mixer:OpdetBeamHighGain"
+physics.filters.nuselection.AnalysisTools.timing.isAPE: true
+
+# Turn off a bunch of nuselection modules that are looking for a true neutrino when isData:s false
+physics.filters.nuselection.AnalysisTools.mcfilter: "" # Turn off mc filter for TextFileGen sample
+physics.filters.nuselection.AnalysisTools.neutron: "" # Turn off neutron analyser for TextFileGen sample
+physics.filters.nuselection.AnalysisTools.neutronw: "" # Turn off neutron weights for TextFileGen sample
+physics.filters.nuselection.AnalysisTools.pi0truth: "" # Turn off Pi0 truth filter for TextFileGen sample
+physics.filters.nuselection.AnalysisTools.slicepurcompl: "" # Turn off SlicePurCompl analyser for TextFileGen sample
+
+physics.analyzers.wcpweights.SaveWeights: false
+physics.analyzers.wcpweights.SaveFullWeights: false
+physics.analyzers.wcpweights.SaveLeeWeights: false
+physics.analyzers.wcpweights.SaveGenieWeights: false
+
+physics.analyzers.wcpselection.SaveWeights: false
+physics.analyzers.wcpselection.SaveLeeWeights: false
+
+# physics.analyzers.wcpselection.get_reboone_time: false # This is overridden in def_filetype_*_overlay.sh, so a custom script is being used
