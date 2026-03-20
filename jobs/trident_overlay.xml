@@ -10,6 +10,7 @@
 <!ENTITY relreco2 "v08_00_00_26">
 <!ENTITY relwcreco2 "v08_00_00_59">
 <!ENTITY relSURPRISE "v10_04_07_20">
+<!ENTITY relntuples "v10_04_07_20">
 <!-- <!ENTITY number_of_events "1000000000"> 
 <!ENTITY number_of_jobs "215"> 
 <!ENTITY number_of_jobs_r1 "199"> 
@@ -338,9 +339,17 @@
   <resource>DEDICATED,OPPORTUNISTIC</resource>
 
   <!-- Larsoft information -->
+  <!-- <larsoft>
+    <tag>&relSURPRISE;</tag>
+    <qual>e26:prof</qual>
+  </larsoft> -->
+
+  <!-- Larsoft information -->
+  <!-- Use MeVPrtl tar with ubana updates -->
   <larsoft>
     <tag>&relSURPRISE;</tag>
     <qual>e26:prof</qual>
+    <local>/pnfs/uboone/persistent/users/jbateman/tars/MeVPrtl/mevprtl_gen.tar</local>
   </larsoft>
 
   <check>0</check>
@@ -366,12 +375,12 @@
       <endscript>run_lar_subshell.sh -c run_eventweight_microboone_sep24_extragenieall_3.fcl -v v08_00_00_88</endscript>
       <endscript>run_lar_subshell.sh -c run_eventweight_microboone_sep24_extragenieall_4.fcl -v v08_00_00_88</endscript>
       <endscript>run_lar_subshell.sh -c run_eventweight_microboone_sep24_extragenieall_5.fcl -v v08_00_00_88</endscript>
-    </fcl> -->
+    </fcl>
     
     <fcl>
       crt_merge_extra_v06_26_01_13.fcl
       <initsource>crt_remerging.sh</initsource>
-    </fcl>
+    </fcl> -->
     <fcl>wirecell_reg4_LightPropTime_LY.fcl</fcl>
     <fcl>wirecell_detsim_optical_overlay_uboone.fcl</fcl>
     <fcl>
@@ -381,7 +390,7 @@
     <fcl>
       run_celltreeub_overlay_port_prod.fcl
       <endscript>fully_unified_reco2_wirecell.sh</endscript>
-    </fcl>
+    </fcl> 
     <fcl>
       run_slimmed_port_overlay_sp.fcl
       <initsource>update_slimmed_port.sh</initsource>
@@ -404,28 +413,34 @@
     <fcl>reco_uboone_mcc9_10_driver_overlay_nugraph_sce.fcl</fcl>
     <fcl>reco_uboone_mcc9_10_driver_overlay_stage2b_sce.fcl</fcl>
     <fcl>run_fullshowerreco_overlay_sce.fcl</fcl>
-    <fcl>run_reboone.fcl</fcl>
+    
+    <!-- <fcl>run_reboone.fcl</fcl> -->
+
     <fcl>
-      run_combinedrecotree_overlay_sce.fcl
-      <initsource>pick_combinedrecotree_overlay_sce.sh</initsource>
-      <initsource>def_filetype_bnb_nu_overlay.sh</initsource>
+      /pnfs/uboone/persistent/users/jbateman/fcls/Trident/run_combinedrecotree_overlay_sce_wrapper.fcl
+      
+      <!-- Don't use this script, which will replace the custom fhicl with a default one based on run -->
+      <!-- <initsource>pick_combinedrecotree_overlay_sce.sh</initsource -->
+      <!--Custom script with reboone flag = false -->
+      <initsource>/pnfs/uboone/persistent/users/jbateman/scripts/Trident/def_filetype_textfilegen_overlay.sh</initsource> 
     </fcl>
     <fcl>
       define_metadata_lantern.fcl
       <endscript>pick_launch_lantern_container_mc_unified.sh</endscript>
-    <endscript>check_config.py</endscript>
     </fcl>
+    <!-- This really should be included, but is being a pain so I'm skipping it for now -->
+      <!-- endscript>check_config.py</endscript-->
 
-    <outdir>/pnfs/uboone/persistent/users/jbateman/&name;/&relwcreco2;/&tag;/&stage4;</outdir>
-    <logdir>/pnfs/uboone/scratch/users/jbateman/&name;/&relwcreco2;/&tag;/&stage4;</logdir>
-    <workdir>/pnfs/uboone/persistent/users/jbateman/work/&name;/&relwcreco2;/&tag;/&stage4;</workdir>
-    <bookdir>/exp/uboone/data/users/jbateman/book/&name;/&relwcreco2;/&tag;/&stage4;</bookdir>
+    <outdir>/pnfs/uboone/persistent/users/jbateman/&name;/&relSURPRISE;/&tag;/&stage5;</outdir>
+    <logdir>/pnfs/uboone/scratch/users/jbateman/&name;/&relSURPRISE;/&tag;/&stage5;</logdir>
+    <workdir>/pnfs/uboone/persistent/users/jbateman/work/&name;/&relSURPRISE;/&tag;/&stage5;</workdir>
+    <bookdir>/exp/uboone/data/users/jbateman/book/&name;/&relSURPRISE;/&tag;/&stage5;</bookdir>
     <maxfilesperjob>1</maxfilesperjob>
-    <numjobs>&number_of_jobs_wcr2;</numjobs>
+    <numjobs>&number_of_jobs_SURPRISE;</numjobs>
     <datatier>reconstructed</datatier>
     <datafiletypes>root,pndr</datafiletypes>
     <memory>5000</memory>
-    <disk>35GB</disk>
+    <disk>20GB</disk>
     <jobsub> -e IFDH_CP_UNLINK_ON_ERROR=1 --expected-lifetime=24h --append_condor_requirements='(TARGET.HAS_CVMFS_uboone_opensciencegrid_org==true)&amp;&amp;(TARGET.HAS_CVMFS_uboone_osgstorage_org==true)' </jobsub>
     <jobsub_start> --expected-lifetime=short</jobsub_start>
     <schema>https</schema>
