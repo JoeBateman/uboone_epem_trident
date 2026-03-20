@@ -1,6 +1,182 @@
-#include "run_neutrinoselectionfilter_run1_data_cc0pinp.fcl"
+#include "neutrinoselection.fcl"
 
-physics.filters.nuselection.AnalysisTools.zbdt:        @local::BDTTool
+# Making a fcl similar to how the combined reco ntuple maker works
+
+process_name: NeutrinoSelectionFilter
+
+services:
+{
+    #Load the service that manages root files for histograms.
+    TFileService: { fileName: "neutrinoselection_filt.root" }
+    TimeTracker:  {}
+    MemoryTracker:     { }     #default is one
+    RandomNumberGenerator: {}                     #ART native random number generator
+    @table::microboone_reco_data_services
+    message:      @local::standard_info
+    FileCatalogMetadata:  @local::art_file_catalog_data   # or _mc or _overlay
+}
+services.DatabaseUtil.ShouldConnect: false
+services.TPCEnergyCalibService.TPCEnergyCalibProvider: @local::microboone_tpcenergycalib_provider_data
+
+#services.DetectorProperties.NumberTimeSamples:                             6400
+#services.DetectorProperties.ReadOutWindowSize:                             6400
+services.DetectorClocksService.InheritClockConfig:                         false
+services.DetectorClocksService.TriggerOffsetTPC:                          -0.400e3
+
+services.SpaceCharge.EnableCorrSCE: true
+services.SpaceCharge.EnableSimEfieldSCE: true
+services.SpaceCharge.EnableSimSpatialSCE: true
+services.SpaceCharge.RepresentationType: "Voxelized_TH3"
+services.SpaceCharge.CalibrationInputFilename: "SpaceCharge/SCEoffsets_dataDriven_combined_bkwd_Jan18.root"
+
+#source is now a root file
+source:
+{
+    module_type: RootInput
+    maxEvents:  -1            # Number of events to create
+    fileNames:   ["dummy.root"]
+}
+
+outputs:
+{
+    rootout:
+        {
+        module_type: RootOutput
+        fileName: "FilteredNuEvents.root"
+        compressionLevel: 0
+        SelectEvents: [p1]
+        dataTier: "ana"
+        }
+
+    out1:
+    {
+         module_type: RootOutput
+         fileName:    "neutrinoselectionfilter.root"    #default file name, can override from command line with -o or --output
+         fastCloning: false
+         dataTier: "ana"
+    }
+}
+
+physics:
+{
+ producers:
+ {
+
+        # collect un-clustered hits in slice and cluster them by proximity
+        nuslicehits: @local::NeutrinoSliceHits
+        proximity: @local::ProximityClustering
+
+        shrreco3d:                        @local::microboone_reco_data_producers.shrreco3d
+        shrreco3dKalmanShower:            @local::shrreco3dKalmanShower
+        shrreco3dKalmanShowercalo:        @local::shrreco3dKalmanShowercalodata
+        shrreco3dKalmanShowercali:        @local::shrreco3dKalmanShowercalidata
+        pandoraTrack:                     @local::microboone_pandoraTrackCreation
+        pandoraTrackcalo:                 @local::microboone_reco_data_producers.pandoracalo
+        pandoraTrackpid:                  @local::particleidconfig
+        pandoraTrackcali:                 @local::microboone_reco_data_producers.pandoracaliSCE
+        pandoraTrackcalipid:              @local::particleidconfig
+        # allShr:                           @local::microboone_pandoraShowerCreation
+ }
+ filters:
+ {
+        nuselection: @local::NuSelectionFilterEmpty
+ }
+ analyzers:
+ {
+
+ }
+
+ #define the producer and filter modules for this path, order matters,
+ ana:  [ ]
+
+ p1: [ nuslicehits, proximity, shrreco3d, shrreco3dKalmanShower, shrreco3dKalmanShowercalo, shrreco3dKalmanShowercali, pandoraTrack, pandoraTrackcalo, pandoraTrackpid, pandoraTrackcali, pandoraTrackcalipid, nuselection]
+
+ e1: [ rootout ]
+
+ #define the output stream, there could be more than one if using filters
+ stream1:  [ out1 ]
+
+ #trigger_paths is a keyword and contains the paths that modify the art::event,
+ #ie filters and producers
+ trigger_paths: [ p1 ]
+
+ #end_paths is a keyword and contains the paths that do not modify the art::Event,
+ #ie analyzers and output streams.  these all run simultaneously
+ #end_paths:     [ stream1, ana ]
+ end_paths:     [ ]
+}
+
+#physics.filters.nuselection.SelectionTool: @local::ShowerSelectionTool
+#physics.filters.nuselection.AnalysisTools.default.BacktrackTag: "" #"gaushitTruthMatch"
+services.SpaceCharge.CalibrationInputFilename: "SpaceCharge/SCEoffsets_dataDriven_combined_bkwd_Jan18.root"
+services.SpaceCharge.EnableCalEfieldSCE: true
+services.SpaceCharge.EnableCalSpatialSCE: true
+services.SpaceCharge.EnableCorrSCE: true
+services.SpaceCharge.EnableSimSpatialSCE: true
+services.SpaceCharge.EnableSimEfieldSCE: true
+services.SpaceCharge.InputFilename: "SpaceCharge/SCEoffsets_dataDriven_combined_fwd_Jan18.root"
+services.SpaceCharge.ResponseType: "Voxelized_TH3"
+services.SpaceCharge.service_provider: "SpaceChargeServiceMicroBooNE"
+services.DetectorPropertiesService.NumberTimeSamples: 6400
+services.DetectorPropertiesService.ReadOutWindowSize: 6400
+services.DetectorClocksService.TriggerOffsetTPC: -0.400e3
+services.DetectorClocksService.InheritClockConfig:  false
+
+physics.filters.nuselection.IsData: true
+
+physics.producers.pandoraTrack.PFParticleLabel:                                                "pandora"
+physics.producers.pandoraTrack.UseAllParticles:                                                true
+
+physics.producers.pandoraTrackcalo.TrackModuleLabel:                                           "pandoraTrack"
+physics.producers.pandoraTrackcalo.SpacePointModuleLabel:                                      "pandora"
+#physics.producers.pandoraTrackcalo.CaloAlg.CalAreaConstants:                                   @local::microboone_reco_data_producers.pandoracalo.CaloAlg.CalAreaConstants #[4.31e-3, 4.02e-3, 4.10e-3]
+
+physics.producers.pandoraTrackcali.CaloAlg.CalAreaConstants:                                   @local::microboone_reco_data_producers.pandoracalo.CaloAlg.CalAreaConstants #  @local::microboone_reco_data_producers.pandoracalo.CaloAlg.CalAreaConstants #[4.31e-3, 4.02e-3, 4.10e-3]
+physics.producers.pandoraTrackcali.TrackModuleLabel:                                           "pandoraTrack"
+physics.producers.pandoraTrackcali.CalorimetryModuleLabel:                                     "pandoraTrackcalo"
+#physics.producers.pandoraTrackcali.CorrectSCE:                                                 true
+
+physics.producers.pandoraTrackpid.ProducerLabels.CaloTrackAssn:                                "pandoraTrackcalo"
+physics.producers.pandoraTrackpid.ProducerLabels.CalorimetryLabel:                             "pandoraTrackcalo"
+physics.producers.pandoraTrackpid.ProducerLabels.HitTrackAssn:                                 "pandoraTrack"
+physics.producers.pandoraTrackpid.ProducerLabels.TrackLabel:                                   "pandoraTrack"
+
+physics.producers.pandoraTrackcalipid.ProducerLabels.CaloTrackAssn:                            "pandoraTrackcali"
+physics.producers.pandoraTrackcalipid.ProducerLabels.CalorimetryLabel:                         "pandoraTrackcali"
+physics.producers.pandoraTrackcalipid.ProducerLabels.HitTrackAssn:                             "pandoraTrack"
+physics.producers.pandoraTrackcalipid.ProducerLabels.TrackLabel:                               "pandoraTrack"
+physics.producers.pandoraTrackcalipid.Chi2PIDAlg.UseMedian:                                    true
+
+physics.producers.proximity.VtxProducer: "pandora"
+physics.producers.proximity.HitProducer: "nuslicehits"
+
+
+microboone_tfile_metadata: {
+   GenerateTFileMetadata: true
+   JSONFileName: "neutrinoselection_filt.root.json"
+   dataTier: "root-tuple"
+   fileFormat: "root"
+}
+
+physics.producers.pandoraTrackcali.ELifetimeCorrection: true
+physics.producers.shrreco3dKalmanShowercali.ELifetimeCorrection: true
+
+physics.filters.nuselection.AnalysisTools.shower: @local::ShowerAnalysisTool
+physics.filters.nuselection.AnalysisTools.zbdt: @local::BDTTool
 physics.filters.nuselection.SelectionTool: @local::CC0PiNpSelectionTool
+#physics.filters.nuselection.SelectionTool: @local::ShowerSelectionTool
+#physics.filters.nuselection.AnalysisTools.default.BacktrackTag: "" #"gaushitTruthMatch"
+physics.filters.nuselection.IsData: false
 
 physics.filters.nuselection.AnalysisTools.default.ignoreMCFlux: true
+physics.filters.nuselection.AnalysisTools.default.isAPE: true
+
+physics.filters.nuselection.AnalysisTools.slicepurcompl.OrigHproducer:"gaushit::OverlayStage1a"
+physics.filters.nuselection.AnalysisTools.timing.nstimePMTWFproducer: "mixer:OpdetBeamHighGain"
+physics.filters.nuselection.AnalysisTools.timing.isAPE: true
+
+physics.filters.nuselection.AnalysisTools.mcfilter: "" # Turn off mc filter for TextFileGen sample
+physics.filters.nuselection.AnalysisTools.neutron: "" # Turn off neutron analyser for TextFileGen sample
+physics.filters.nuselection.AnalysisTools.neutronw: "" # Turn off neutron weights for TextFileGen sample
+physics.filters.nuselection.AnalysisTools.pi0truth: "" # Turn off Pi0 truth filter for TextFileGen sample
+physics.filters.nuselection.AnalysisTools.slicepurcompl: "" # Turn off SlicePurCompl analyser for TextFileGen sample
