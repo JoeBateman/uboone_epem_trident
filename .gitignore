@@ -26,3 +26,4 @@ jobs/test_area
 
 # Output files from running larsoft with pandora
 Pandora_Geometry.xml
+jobs/*.list
