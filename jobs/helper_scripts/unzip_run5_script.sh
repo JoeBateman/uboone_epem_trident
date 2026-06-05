@@ -15,8 +15,8 @@
 #!/bin/bash
 
 ## configurable parameter
-TARname="epem_nuTrident_100k_50evts.tar"
-FileListName="epem_nuTrident_100k/numu_nuee_100k_splited_file_50evts.list"   # name of the list of HEPevt files
+TARname="run5_epem_50k_50evts.tar"
+FileListName="run5_epem_50k/run5_epem_50k_splited_file_50evts.list"   # name of the list of HEPevt files
 TemplateFhicl="Simulation_AddOverlay_batch_TEMPLATE.fcl"
 FinalFhicl="Simulation_AddOverlay_batch_LOCAL.fcl"
 
