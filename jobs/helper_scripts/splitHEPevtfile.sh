@@ -14,10 +14,10 @@ particlesPerEvent=6  ## number of particles per event in HEPevt file
 
 ## the directory where large HEPevt text file sits
 LargeFilePath="/exp/uboone/app/users/jbateman/workdir/DarkNews/Trident/outputs"
-FileName="numu_epem_5000.txt"
+FileName="run4b_epem_100k.txt"
 
 ## the directory where HEPevt text file with smaller size will sit
-OutputFilePath="/exp/uboone/app/users/jbateman/workdir/DarkNews/Trident/jobs/HEPevtfile_list/numu_epem"
+OutputFilePath="/exp/uboone/app/users/jbateman/workdir/DarkNews/Trident/jobs/HEPevtfile_list/run4b_epem_100k"
 
 ## --------- CONFIGURABLE -------------------------
 
@@ -30,7 +30,8 @@ mkdir -p $OutputFilePath"/"$SmallFileSubDir
 cd $LargeFilePath
 for file in $FileName; do
     echo $file
-    split -l $LNCountPerFile $file $OutputFilePath"/"$SmallFileSubDir"/"$file 
+    # Added -a 4 to increase the suffix length to 4 characters (aaaa, aaab, etc.)
+    split -a 4 -l $LNCountPerFile "$file" "$OutputFilePath/$SmallFileSubDir/$file"
 done
 
 
