@@ -1,6 +1,6 @@
 files_ana_list=/exp/uboone/data/users/jbateman/book/Trident_EPEM/v10_04_07_20/Trident_Overlay/SURPRISE_reco2/filesana.list
 output_path=/exp/uboone/data/users/jbateman/workdir/DarkNews/Trident/SURPRISE 
-out_file=trident_SURPRISE_100evts.root
+out_file=trident_SURPRISE_big.root
 
 hist_template=reco_stage_2_hist_
 
@@ -19,3 +19,4 @@ while IFS= read -r line; do
 done < "$files_ana_list"
 
 hadd -f $output_path/$out_file @temp_filesana.list
+rm temp_filesana.list
