@@ -237,8 +237,8 @@ double deltacrosssectionresult;
 //*****************************************************************
 void SetTridentProcess();
 void SetNuclearParameters();
-void GenerateEvent(bool);
-void GenerateEvents();
+void GenerateEvent(bool,bool);
+void GenerateEvents(bool);
 void GenerateRandomPoint();
 void DetermineWeight();
 void FindMaxWeight();
@@ -563,15 +563,17 @@ int main(){
 	    std::cout << "[1] fixed neutrino energy \n\n";
         std::cout << "[2] Use the uBooNE BNB flux \n\n";
         std::cout << "[3] Use the uBooNE NuMI flux \n\n";
-        std::cout << "[4] Load flux from a ROOT file \n\n";
+        std::cout << "[4] Use the uBooNE BNB flux (distribute events isotropic in space and direction) \n\n";
+        std::cout << "[5] Load flux from a ROOT file \n\n";
+        
         std::cin >> energy_type;
-	    if(energy_type.compare("1") != 0 && energy_type.compare("2") != 0  && energy_type.compare("3") != 0  && energy_type.compare("4") != 0){
+	    if(energy_type.compare("1") != 0 && energy_type.compare("2") != 0  && energy_type.compare("3") != 0  && energy_type.compare("4") != 0 && energy_type.compare("5") != 0){
 	    std::cout << "\n Invalid selection \n";
 	    return 0;}
 
         // Use the selected process to determine neutrino flavor and particle/antiparticle
         
-
+        bool isIsotropic = false;
         if(energy_type.compare("1") == 0){
 	    Enu = 0.0;
 	    std::cout << "\n";
@@ -593,6 +595,15 @@ int main(){
             LoadFluxFromROOT(flux_file, PDG1);}
         
         if(energy_type.compare("4") == 0){
+            string is_antinu;
+            string flavor;
+            flux_file = "/exp/uboone/app/users/jbateman/workdir/DarkNews/Trident/data/flux/bnb/MCC9_FluxHist_volTPCActive_w2D_hists.root";
+            
+            LoadFluxFromROOT(flux_file, PDG1);
+            isIsotropic = true;}
+
+
+        if(energy_type.compare("5") == 0){
             string is_antinu;
             string flavor;
             std::cout << "\n";
@@ -678,7 +689,7 @@ int main(){
         // Generate Events
         if(command.compare("GenerateEvents") == 0){
         FindMaxWeight();
-	    GenerateEvents();
+	    GenerateEvents(isIsotropic);
 
         if (output_format == 1){
             filename_out.append(".teg");
@@ -699,7 +710,7 @@ int main(){
 // Generate a random point in phase space
 //********************************************************************
 
-void GenerateEvent(bool get_vertex){
+void GenerateEvent(bool get_vertex, bool isIsotropic = false){
 	
     if (energy_type.compare("1") == 0){
       eps1 = Enu;
@@ -861,6 +872,76 @@ void GenerateEvent(bool get_vertex){
         double Pprimex_new = R[0][0]*Pprimex + R[0][1]*Pprimey + R[0][2]*Pprimez;
         double Pprimey_new = R[1][0]*Pprimex + R[1][1]*Pprimey + R[1][2]*Pprimez;
         double Pprimez_new = R[2][0]*Pprimex + R[2][1]*Pprimey + R[2][2]*Pprimez;
+
+        Pprimex = Pprimex_new;
+        Pprimey = Pprimey_new;
+        Pprimez = Pprimez_new;
+    }
+
+    if (isIsotropic){
+        // If distributing isotropically, overwrite the neutrino direction with an isotropic one
+        double x1 = realdistribution(generator); // uniformly distributed between 0 and 1
+        double x2 = realdistribution(generator); // uniformly distributed between 0 and 1
+        double x3 = realdistribution(generator); // uniformly distributed between 0 and 1
+
+
+        double R[3][3] = {{cos(2*pi*x1), sin(2*pi*x1), 0},
+                        {-sin(2*pi*x1), cos(2*pi*x1), 0},
+                        {0, 0, 1}}; // rotation matrix for rotation around z-axis by random angle
+
+        double v[3] = {cos(2*pi*x2)*sqrt(x3), sin(2*pi*x2)*sqrt(x3), sqrt(1.0 - x3)}; // vector for construction of H matrix
+        double I[3][3] = {{1, 0, 0},
+                        {0, 1, 0},
+                        {0, 0, 1}}; // identity matrix
+        double vvT[3][3] = {{v[0]*v[0], v[0]*v[1], v[0]*v[2]},
+                    {v[1]*v[0], v[1]*v[1], v[1]*v[2]},
+                    {v[2]*v[0], v[2]*v[1], v[2]*v[2]}}; // outer product of v with itself
+        double H[3][3] = {{I[0][0] - 2*vvT[0][0], -2*vvT[0][1], -2*vvT[0][2]},
+                        {-2*vvT[1][0], I[1][1] - 2*vvT[1][1], -2*vvT[1][2]},
+                        {-2*vvT[2][0], -2*vvT[2][1], I[2][2] - 2*vvT[2][2]}}; // Householder transformation matrix
+
+        double M[3][3]; // combined rotation matrix
+        for (int i = 0; i < 3; i++){
+            for (int j = 0; j < 3; j++){
+                M[i][j] = 0;
+                for (int k = 0; k < 3; k++){
+                    M[i][j] += H[i][k]*R[k][j];}}}
+        
+        double pnuinx_new = M[0][0]*pnuinx + M[0][1]*pnuiny + M[0][2]*pnuinz;
+        double pnuiny_new = M[1][0]*pnuinx + M[1][1]*pnuiny + M[1][2]*pnuinz;
+        double pnuinz_new = M[2][0]*pnuinx + M[2][1]*pnuiny + M[2][2]*pnuinz;
+
+        pnuinx = pnuinx_new;
+        pnuiny = pnuiny_new;
+        pnuinz = pnuinz_new;
+
+        double pnuoutx_new = M[0][0]*pnuoutx + M[0][1]*pnuouty + M[0][2]*pnuoutz;
+        double pnuouty_new = M[1][0]*pnuoutx + M[1][1]*pnuouty + M[1][2]*pnuoutz;
+        double pnuoutz_new = M[2][0]*pnuoutx + M[2][1]*pnuouty + M[2][2]*pnuoutz;
+
+        pnuoutx = pnuoutx_new;
+        pnuouty = pnuouty_new;
+        pnuoutz = pnuoutz_new;
+
+        double plminusx_new = M[0][0]*plminusx + M[0][1]*plminusy + M[0][2]*plminusz;
+        double plminusy_new = M[1][0]*plminusx + M[1][1]*plminusy + M[1][2]*plminusz;
+        double plminusz_new = M[2][0]*plminusx + M[2][1]*plminusy + M[2][2]*plminusz;
+
+        plminusx = plminusx_new;
+        plminusy = plminusy_new;
+        plminusz = plminusz_new;
+
+        double plplusx_new = M[0][0]*plplusx + M[0][1]*plplusy + M[0][2]*plplusz;
+        double plplusy_new = M[1][0]*plplusx + M[1][1]*plplusy + M[1][2]*plplusz;
+        double plplusz_new = M[2][0]*plplusx + M[2][1]*plplusy + M[2][2]*plplusz;
+
+        plplusx = plplusx_new;
+        plplusy = plplusy_new;
+        plplusz = plplusz_new;
+
+        double Pprimex_new = M[0][0]*Pprimex + M[0][1]*Pprimey + M[0][2]*Pprimez;
+        double Pprimey_new = M[1][0]*Pprimex + M[1][1]*Pprimey + M[1][2]*Pprimez;
+        double Pprimez_new = M[2][0]*Pprimex + M[2][1]*Pprimey + M[2][2]*Pprimez;
 
         Pprimex = Pprimex_new;
         Pprimey = Pprimey_new;
@@ -2906,7 +2987,7 @@ vector<double> SampleEvsZhist(double E_nu, string filename){
 // Generate unweighted events
 //*************************************************
    
-void GenerateEvents(){
+void GenerateEvents(bool isIsotropic = false){
       
       double random;
       int i = 0;
@@ -2939,7 +3020,7 @@ void GenerateEvents(){
 
       eventcounter=eventcounter+1;
       bool get_vertex = true;
-      GenerateEvent(get_vertex);
+      GenerateEvent(get_vertex, isIsotropic);
       DetermineWeight();
       
       if(weight>2*maxweight){
