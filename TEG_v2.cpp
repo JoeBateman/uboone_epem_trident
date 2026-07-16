@@ -2441,10 +2441,7 @@ void LoadFluxFromROOT(string filename, int target_pdg){
 
     string key; 
     // Get the histogram
-    if (filename.find("MCC9") != string::npos){
-        key = "hE"+pdg_name+"_cv";
-    }
-    else if (filename.find("NuMI") != string::npos){
+    if (filename.find("MCC9") != string::npos || filename.find("NuMI") != string::npos){
         key = "hE_"+pdg_name+"_cv";
     }
     else if (filename.find("g4lbne") != string::npos){
@@ -2888,11 +2885,7 @@ void LoadEvsZhist(string filename){
     }
     if (PDG1 < 0) pdg_name = pdg_name+"bar";
     
-    string key = "hE_vs_z_"+pdg_name;+ "_cv"
-
-    // if (filename.find("NuMI") != string::npos){
-    //     key = key + "_cv";
-    // }
+    string key = "hE_vs_z_"+pdg_name;+ "_cv";
 
     TH2D* hist = (TH2D*)infile->Get(key.c_str());
     if (!hist) {
