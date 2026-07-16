@@ -562,9 +562,10 @@ int main(){
         std::cout << "Are you using a fixed neutrino energy or an energy distribution? \n\n";
 	    std::cout << "[1] fixed neutrino energy \n\n";
         std::cout << "[2] Use the uBooNE BNB flux \n\n";
-        std::cout << "[3] Use the uBooNE NuMI flux \n\n";
-        std::cout << "[4] Use the uBooNE BNB flux (distribute events isotropic in space and direction) \n\n";
-        std::cout << "[5] Load flux from a ROOT file \n\n";
+        std::cout << "[3] Use the uBooNE NuMI flux (FHC)  \n\n";
+        std::cout << "[4] Use the uBooNE NuMI flux (RHC)  \n\n";
+        std::cout << "[5] Use the uBooNE BNB flux (distribute events isotropic in space and direction) \n\n";
+        std::cout << "[6] Load flux from a ROOT file \n\n";
         
         std::cin >> energy_type;
 	    if(energy_type.compare("1") != 0 && energy_type.compare("2") != 0  && energy_type.compare("3") != 0  && energy_type.compare("4") != 0 && energy_type.compare("5") != 0){
@@ -590,11 +591,18 @@ int main(){
         if(energy_type.compare("3") == 0){
             string is_antinu;
             string flavor;
-            flux_file = "/exp/uboone/app/users/jbateman/workdir/DarkNews/Trident/data/flux/numi/MCC9_FluxHist_volTPCActive_w2D_hists.root";
+            flux_file = "/exp/uboone/app/users/jbateman/workdir/DarkNews/Trident/data/flux/numi/NuMI_g4_10_4_zero_threshold_FHC_FluxHist_w2D_hists.root";
+            
+            LoadFluxFromROOT(flux_file, PDG1);}
+
+        if(energy_type.compare("4") == 0){
+            string is_antinu;
+            string flavor;
+            flux_file = "/exp/uboone/app/users/jbateman/workdir/DarkNews/Trident/data/flux/numi/NuMI_g4_10_4_zero_threshold_RHC_FluxHist_w2D_hists.root";
             
             LoadFluxFromROOT(flux_file, PDG1);}
         
-        if(energy_type.compare("4") == 0){
+        if(energy_type.compare("5") == 0){
             string is_antinu;
             string flavor;
             flux_file = "/exp/uboone/app/users/jbateman/workdir/DarkNews/Trident/data/flux/bnb/MCC9_FluxHist_volTPCActive_w2D_hists.root";
@@ -603,7 +611,7 @@ int main(){
             isIsotropic = true;}
 
 
-        if(energy_type.compare("5") == 0){
+        if(energy_type.compare("6") == 0){
             string is_antinu;
             string flavor;
             std::cout << "\n";
@@ -2436,6 +2444,9 @@ void LoadFluxFromROOT(string filename, int target_pdg){
     if (filename.find("MCC9") != string::npos){
         key = "hE"+pdg_name+"_cv";
     }
+    else if (filename.find("NuMI") != string::npos){
+        key = "hE_"+pdg_name+"_cv";
+    }
     else if (filename.find("g4lbne") != string::npos){
         key = pdg_name+"_flux";
     }
@@ -2877,7 +2888,12 @@ void LoadEvsZhist(string filename){
     }
     if (PDG1 < 0) pdg_name = pdg_name+"bar";
     
-    string key = "hE_vs_z_"+pdg_name;
+    string key = "hE_vs_z_"+pdg_name;+ "_cv"
+
+    // if (filename.find("NuMI") != string::npos){
+    //     key = key + "_cv";
+    // }
+
     TH2D* hist = (TH2D*)infile->Get(key.c_str());
     if (!hist) {
         std::cerr << "Error: Could not find histogram " << key << " in ROOT file. Saving empty histogram." << std::endl;
@@ -2911,7 +2927,7 @@ vector<double> SampleEvsZhist(double E_nu, string filename){
         offset_y = BNB_y_offset;
         offset_z = BNB_z_offset;
     }
-    else if (filename.find("numi") != string::npos || filename.find("NUMI") != string::npos) {
+    else if (filename.find("numi") != string::npos || filename.find("NUMI") != string::npos || filename.find("NuMI") != string::npos || filename.find("Gsimple") != string::npos) {
         offset_x = NuMI_x_offset;
         offset_y = NuMI_y_offset;
         offset_z = NuMI_z_offset;
