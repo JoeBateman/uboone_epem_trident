@@ -9,15 +9,15 @@ CurrentDir=$PWD
 ## --------- CONFIGURABLE -------------------------
 
 ## number of event you'd like smaller HEPevt file to contain
-declare -i BatchSize=50
+declare -i BatchSize=60
 particlesPerEvent=6  ## number of particles per event in HEPevt file
 
 ## the directory where large HEPevt text file sits
 LargeFilePath="/exp/uboone/app/users/jbateman/workdir/DarkNews/Trident/outputs"
-FileName="run4b_epem_100k.txt"
+FileName="epem_isotropic_20k.txt"
 
 ## the directory where HEPevt text file with smaller size will sit
-OutputFilePath="/exp/uboone/app/users/jbateman/workdir/DarkNews/Trident/jobs/HEPevtfile_list/run4b_epem_100k"
+OutputFilePath="/exp/uboone/app/users/jbateman/workdir/DarkNews/Trident/jobs/HEPevtfile_list/epem_isotropic_20k"
 
 ## --------- CONFIGURABLE -------------------------
 

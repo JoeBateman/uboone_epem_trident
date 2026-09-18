@@ -65,5 +65,5 @@ physics.producers.generator.FluxCopyMethod: "IFDH"
 
 #reduce file name length
 outputs.out1.fileName: "%ifb_%tc_gen.root"
-source.maxEvents:   50
-physics.producers.generator.InputFileName: "numu_epem/splited_file_50evts/numu_epem_5000.txtaa"
+source.maxEvents:   60
+physics.producers.generator.InputFileName: "run4b_epem_100k/splited_file_40evts/run4b_epem_100k.txtaaaa"
