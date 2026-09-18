@@ -27,3 +27,7 @@ jobs/test_area
 # Output files from running larsoft with pandora
 Pandora_Geometry.xml
 jobs/*.list
+sensitivity/sensitivity_calc_backup.ipynb
+sensitivity/sensitivity_calc.ipynb
+sensitivity/microboone_trident_events.csv
+sensitivity/microboone_trident_events.parquet
