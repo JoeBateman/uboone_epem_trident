@@ -2885,7 +2885,7 @@ void LoadEvsZhist(string filename){
     }
     if (PDG1 < 0) pdg_name = pdg_name+"bar";
     
-    string key = "hE_vs_z_"+pdg_name;+ "_cv";
+    string key = "hE_vs_z_"+pdg_name+"_cv";
 
     TH2D* hist = (TH2D*)infile->Get(key.c_str());
     if (!hist) {
