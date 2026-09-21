@@ -19,6 +19,8 @@ cross_sections/*.csv
 *.txt
 *.hepmc3
 *.hepevt
+*.pdf
+*.png
 
 # Ignoring specific output files and test areas
 jobs/HEPevtfile_list
@@ -31,6 +33,8 @@ sensitivity
 jobs/helper_fcls/Simulation_AddOverlay_batch_80evts_LOCAL.fcl
 jobs/helper_fcls/Simulation_AddOverlay_batch_80evts_TEMPLATE.fcl
 jobs/helper_fcls/Simulation_AddOverlay_batch_test.fcl
+scripts/uboone_4f_evgen_scan.sh
+scripts/uboone_4f_xsec_scan.sh
+scripts/n_flux_files.sh
 jobs/helper_scripts/unzip_iso_script.sh
-jobs/helper_scripts/unzip_run4b_script.sh
-jobs/helper_scripts/unzip_run5_script.sh
+flux_plotter.ipynb
