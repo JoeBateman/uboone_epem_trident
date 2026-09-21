@@ -245,7 +245,6 @@ void FindMaxWeight();
 void ComputeCrossSection();
 void ReadDistribution();
 void LoadFluxFromROOT(string, int);
-void GenerateVertex();
 void WriteEventFile(string);
 void WriteEventHepMC3(string);
 void WriteEventHepevt(string);
@@ -281,17 +280,32 @@ vector<double>  SampleEvsZhist(double, string);
 double Interpolation(double x, int r){
 
     double x1, y1, x2, y2, slope, interp;
+    bool found = false;
 
     for (int i = 0; i < r-1; i++){
-        if (InterpolationList[i][0] < x && x < InterpolationList[i+1][0]){
+        if (InterpolationList[i][0] <= x && x <= InterpolationList[i+1][0]){
             // Set the x and y values of the two points
             x1 = InterpolationList[i][0];
             x2 = InterpolationList[i+1][0];
             y1 = InterpolationList[i][1];
             y2 = InterpolationList[i+1][1];
+            found = true;
+            break;
         }
     }
-    
+
+    if (!found){
+        // x falls outside the grid: extrapolate linearly from the nearest edge segment
+        if (x < InterpolationList[0][0]){
+            x1 = InterpolationList[0][0]; y1 = InterpolationList[0][1];
+            x2 = InterpolationList[1][0]; y2 = InterpolationList[1][1];
+        }
+        else {
+            x1 = InterpolationList[r-2][0]; y1 = InterpolationList[r-2][1];
+            x2 = InterpolationList[r-1][0]; y2 = InterpolationList[r-1][1];
+        }
+    }
+
     // Calculate the slope of the line between the two points
     slope = (y2-y1)/(x2-x1);
     // Calculate the y value for the given x value
@@ -303,19 +317,34 @@ double Interpolation(double x, int r){
 double InverseInterpolation(double y, int r){
 
     double x1, y1, x2, y2, slope, invinterp;
+    bool found = false;
 
     for (int i = 0; i < r-1; i++){
-        if (InterpolationList[i][1] > y && y > InterpolationList[i+1][1]){
+        if (InterpolationList[i][1] >= y && y >= InterpolationList[i+1][1]){
             // Set the x and y values of the two points
             x1 = InterpolationList[i][0];
             x2 = InterpolationList[i+1][0];
             y1 = InterpolationList[i][1];
             y2 = InterpolationList[i+1][1];
+            found = true;
+            break;
         }
     }
-    							    
+
+    if (!found){
+        // y falls outside the grid: extrapolate linearly from the nearest edge segment
+        if (y > InterpolationList[0][1]){
+            x1 = InterpolationList[0][0]; y1 = InterpolationList[0][1];
+            x2 = InterpolationList[1][0]; y2 = InterpolationList[1][1];
+        }
+        else {
+            x1 = InterpolationList[r-2][0]; y1 = InterpolationList[r-2][1];
+            x2 = InterpolationList[r-1][0]; y2 = InterpolationList[r-1][1];
+        }
+    }
+
     // Calculate the slope of the line between the two points
-    slope = (x2-x1)/(y2-y1);   
+    slope = (x2-x1)/(y2-y1);
     // Calculate the y value for the given x value
     invinterp = slope*(y-y1)+x1;
 
@@ -484,6 +513,7 @@ void SetNuclearParameters(){
 	    for (int jj = 0; jj < 192; jj++){
             for (int kk = 0; kk < 2; kk++){
                 InterpolationList[jj][kk] = InterpolationListAr[jj][kk];}}}
+                // InterpolationList[jj][kk] = InterpolationListArBallet[jj][kk];}}}
             
     else if (material.compare("Fe") == 0){
         A = 56;
@@ -568,7 +598,7 @@ int main(){
         std::cout << "[6] Load flux from a ROOT file \n\n";
         
         std::cin >> energy_type;
-	    if(energy_type.compare("1") != 0 && energy_type.compare("2") != 0  && energy_type.compare("3") != 0  && energy_type.compare("4") != 0 && energy_type.compare("5") != 0){
+	    if(energy_type.compare("1") != 0 && energy_type.compare("2") != 0  && energy_type.compare("3") != 0  && energy_type.compare("4") != 0 && energy_type.compare("5") != 0 && energy_type.compare("6") != 0){
 	    std::cout << "\n Invalid selection \n";
 	    return 0;}
 
@@ -2663,7 +2693,7 @@ void WriteEventHepMC3(string filename){
             target_mass = Mneutron;
         }
         else if (material.compare("proton") == 0){
-            target_pdg == 2212;
+            target_pdg = 2212;
             target_mass = Mproton;
         }
         
@@ -2778,7 +2808,7 @@ void WriteEventHepevt(string filename){
             target_mass = Mneutron;
         }
         else if (material.compare("proton") == 0){
-            target_pdg == 2212;
+            target_pdg = 2212;
             target_mass = Mproton;
         }
         outfile << 3 << " " << target_pdg << " 0 0 3 6 ";
@@ -2942,22 +2972,31 @@ vector<double> SampleEvsZhist(double E_nu, string filename){
     int ebin = hist->GetXaxis()->FindBin(E_nu);
     // Project the histogram onto the z-axis for the given energy bin
     TH1D* zproj = hist->ProjectionY("zproj", ebin, ebin);
-    // Normalize the projection to create a probability distribution
-    zproj->Scale(1.0 / zproj->Integral());
-    // Sample a z value from the distribution
-    double rand = realdistribution(generator);
-    double cumulative = 0.0;
     double sampled_z = 0.0;
-    for (int bin = 1; bin <= zproj->GetNbinsX(); bin++) {
-        cumulative += zproj->GetBinContent(bin);
-        if (rand < cumulative) {
-            sampled_z = zproj->GetBinCenter(bin);
-            break;
+    double integral = zproj->Integral();
+    if (integral <= 0){
+        std::cerr << "Warning: E vs Z histogram has no entries for E_nu = " << E_nu << " GeV. Sampling z uniformly instead." << std::endl;
+        sampled_z = zproj->GetXaxis()->GetXmin() + (zproj->GetXaxis()->GetXmax() - zproj->GetXaxis()->GetXmin()) * realdistribution(generator);
+    }
+    else {
+        // Normalize the projection to create a probability distribution
+        zproj->Scale(1.0 / integral);
+        // Sample a z value from the distribution
+        double rand = realdistribution(generator);
+        double cumulative = 0.0;
+        int zbin;
+        for (zbin = 1; zbin <= zproj->GetNbinsX(); zbin++) {
+            cumulative += zproj->GetBinContent(zbin);
+            if (rand < cumulative) {
+                sampled_z = zproj->GetBinCenter(zbin);
+                break;
+            }
+        }
+        if (zbin == zproj->GetNbinsX() + 1) {
+            sampled_z = zproj->GetBinCenter(zproj->GetNbinsX());
         }
     }
-    if (bin == zproj->GetNbinsX() + 1) {
-        sampled_z = zproj->GetBinCenter(zproj->GetNbinsX());
-    }
+    delete zproj;
 
     // Get random x and y within the beam radius 
     double r = radius_decay_pipe * sqrt(realdistribution(generator));
