@@ -15,10 +15,10 @@
 #!/bin/bash
 
 ## configurable parameter
-TARname="run5_epem_100k_50evts.tar"
-FileListName="run5_epem_100k/run5_epem_100k_splited_file_50evts.list"   # name of the list of HEPevt files
-TemplateFhicl="Simulation_AddOverlay_batch_TEMPLATE.fcl"
-FinalFhicl="Simulation_AddOverlay_batch_LOCAL.fcl"
+TARname="run5_epem_100k_80evts.tar"
+FileListName="run5_epem_100k/run5_epem_100k_splited_file_80evts.list"   # name of the list of HEPevt files
+TemplateFhicl="Simulation_AddOverlay_batch_80evts_TEMPLATE.fcl"
+FinalFhicl="Simulation_AddOverlay_batch_80evts_LOCAL.fcl"
 
 
 ## unzip the tarball with HEPevt files

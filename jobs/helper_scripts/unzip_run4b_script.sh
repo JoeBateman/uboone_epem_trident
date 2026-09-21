@@ -15,8 +15,8 @@
 #!/bin/bash
 
 ## configurable parameter
-TARname="run4b_epem_100k_50evts.tar"
-FileListName="run4b_epem_100k/run4b_epem_100k_splited_file_50evts.list"   # name of the list of HEPevt files
+TARname="run4b_epem_100k_60evts.tar"
+FileListName="run4b_epem_100k/run4b_epem_100k_splited_file_60evts.list"   # name of the list of HEPevt files
 TemplateFhicl="Simulation_AddOverlay_batch_TEMPLATE.fcl"
 FinalFhicl="Simulation_AddOverlay_batch_LOCAL.fcl"
 

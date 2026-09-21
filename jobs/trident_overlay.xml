@@ -11,7 +11,7 @@
 <!ENTITY relntuples "v10_04_07_20">
 
 <!ENTITY number_of_events "-1"> 
-<!ENTITY number_of_jobs "1000"> 
+<!ENTITY number_of_jobs "5"> 
 <!ENTITY number_of_jobs_detsim "530"> 
 <!ENTITY number_of_jobs_r1 "528"> 
 <!ENTITY number_of_jobs_SURPRISE "527"> 
