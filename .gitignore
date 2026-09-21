@@ -38,3 +38,4 @@ scripts/uboone_4f_xsec_scan.sh
 scripts/n_flux_files.sh
 jobs/helper_scripts/unzip_iso_script.sh
 flux_plotter.ipynb
+docs/GENERATOR_NOTES.md
